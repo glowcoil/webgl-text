@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+
+        <script id="vert" type="x-shader/x-vertex">#version 300 es
+            precision highp float;
+
+            out vec2 vPos;
+
+            const vec4 verts[4] = vec4[4](
+                vec4(1.0, -1.0, 0.0, 1.0),
+                vec4(1.0, 1.0, 0.0, 1.0),
+                vec4(-1.0, -1.0, 0.0, 1.0),
+                vec4(-1.0, 1.0, 0.0, 1.0)
+            );
+
+            void main() {
+                vPos = 0.5f * (verts[gl_VertexID].xy + 1.0f);
+                gl_Position = verts[gl_VertexID];
+            }
+        </script>
+        <script id="frag" type="x-shader/x-vertex">#version 300 es
+            precision highp float;
+
+            in vec2 vPos;
+
+            out vec4 oColor;
+
+            void main() {
+                oColor = vec4(vPos, 1.0, 1.0);
+            }
+        </script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const canvas = document.getElementById("canvas");
+
+                const ratio = window.devicePixelRatio ? window.devicePixelRatio : 1;
+                canvas.width = canvas.clientWidth * ratio;
+                canvas.height = canvas.clientHeight * ratio;
+
+                const gl = canvas.getContext("webgl2", { antialias: false });
+
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                const vertSource = document.getElementById("vert").textContent;
+                const fragSource = document.getElementById("frag").textContent;
+
+                const vertShader = gl.createShader(gl.VERTEX_SHADER);
+                gl.shaderSource(vertShader, vertSource);
+                gl.compileShader(vertShader);
+                if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+                    console.error("failed to compile vertex shader:", gl.getShaderInfoLog(vertShader));
+                    gl.deleteShader(vertShader);
+                    return;
+                }
+
+                const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+                gl.shaderSource(fragShader, fragSource);
+                gl.compileShader(fragShader);
+                if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+                    console.error("failed to compile fragment shader:", gl.getShaderInfoLog(fragShader));
+                    gl.deleteShader(fragShader);
+                    return;
+                }
+
+                const program = gl.createProgram();
+                gl.attachShader(program, vertShader);
+                gl.attachShader(program, fragShader);
+                gl.linkProgram(program);
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    console.error("failed to link shader:", gl.getProgramInfoLog(program));
+                    gl.deleteProgram(program);
+                    return;
+                }
+
+                const positionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.vertexAttribPointer(0, 1, gl.FLOAT, false, 0, 0);
+                gl.enableVertexAttribArray(0);
+
+                gl.useProgram(program);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            });
+        </script>
+    </head>
+
+    <body>
+        <canvas id="canvas" style="width: 320px; height: 240px;"></canvas>
+    </body>
+</html>
